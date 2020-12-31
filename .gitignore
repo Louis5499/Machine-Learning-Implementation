@@ -1,0 +1,17 @@
+# Unnecessary files
+.ipynb_checkpoints/
+__pycache__
+*.zip
+
+# Keep data confidential
+## HW2
+fixed_test.csv
+hm_hospitales_covid_structured_30d_train.csv
+split_train_export_30d.csv
+## HW3
+predicting_images
+
+# CKIP-Tagger Property
+final/data
+
+
