@@ -40,7 +40,7 @@ pip3 install -U ckiptagger[tf,gdown]
 ```
 If you are python 2 user, Please enter:
 ```shell
-pip3 install -U ckiptagger[tf,gdown]
+pip install -U ckiptagger[tf,gdown]
 ```
 
 3. Run `python3 tfidf.py` or `python tfidf.py`
