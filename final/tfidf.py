@@ -133,6 +133,14 @@ def url_to_json(url):
         response.close()
     print('EXCEED RETRIES: ', url)
 
+def get_comment_json(post_id):
+    url = dcard_api + 'posts/' + str(post_id) + '/comments?popular=true' # Only specify hot top 3 comments
+    comments = []
+    _comments = url_to_json(url)  # a list of dict
+    for _comment in _comments:
+        if 'content' in _comment.keys():    comments.append(clean(_comment['content']))
+    return comments
+
 def get_post_json(post_id):
     url = dcard_api + 'posts/' + str(post_id)
     _post = url_to_json(url) # dict
@@ -165,12 +173,14 @@ def keywords_byID(ids):
     data_list = []
     for id in ids:
         data = get_post_json(id)
+        comments = get_comment_json(id)
         if data == []:  return data_list
         if data == None: continue
         print(f"Searching for: {id} {data['title']}")
         keyword_content = transformKeywordDataToReadableData(tfidf([data['content']], data['forumAlias'], 1)[:3], 0)
         keyword_content_pf = transformKeywordDataToReadableData(tfidf([data['content']], data['forumAlias'], 2)[:3], 1)
         data['break_words'] = breakWords([data['content']])
+        data['comments'] = comments
         data = { **data, **keyword_content, **keyword_content_pf }
         data_list.append(data)
     return data_list
@@ -226,7 +236,7 @@ def get_forum_posts(forum_name, post_num = 20, popular='false'):
         item['popular'] = 'true'
 
 
-  get_all_col_nam = ['title','content','excerpt','anonymousSchool','anonymousDepartment','createdAt','commentCount','likeCount','tags','topics','withNickname','forumAlias','school','department','gender','reactions', 'popular', 'keyword_word_1','keyword_tf*idf_1','keyword_tf*idf*pf_1','keyword_tf_1','keyword_idf_1','keyword_pf_1','keyword_biword_1','keyword_word_2','keyword_tf*idf_2','keyword_tf*idf*pf_2','keyword_tf_2','keyword_idf_2','keyword_pf_2','keyword_biword_2','keyword_word_3','keyword_tf*idf_3','keyword_tf*idf*pf_3','keyword_tf_3','keyword_idf_3','keyword_pf_3','keyword_biword_3','pf_keyword_word_1','pf_keyword_tf*idf_1','pf_keyword_tf*idf*pf_1','pf_keyword_tf_1','pf_keyword_idf_1','pf_keyword_pf_1','pf_keyword_biword_1','pf_keyword_word_2','pf_keyword_tf*idf_2','pf_keyword_tf*idf*pf_2','pf_keyword_tf_2','pf_keyword_idf_2','pf_keyword_pf_2','pf_keyword_biword_2','pf_keyword_word_3','pf_keyword_tf*idf_3','pf_keyword_tf*idf*pf_3','pf_keyword_tf_3','pf_keyword_idf_3','pf_keyword_pf_3','pf_keyword_biword_3', 'break_words']
+  get_all_col_nam = ['title','content','excerpt','anonymousSchool','anonymousDepartment','createdAt','commentCount','likeCount','tags','topics','withNickname','forumAlias','school','department','gender','reactions', 'popular', 'keyword_word_1','keyword_tf*idf_1','keyword_tf*idf*pf_1','keyword_tf_1','keyword_idf_1','keyword_pf_1','keyword_biword_1','keyword_word_2','keyword_tf*idf_2','keyword_tf*idf*pf_2','keyword_tf_2','keyword_idf_2','keyword_pf_2','keyword_biword_2','keyword_word_3','keyword_tf*idf_3','keyword_tf*idf*pf_3','keyword_tf_3','keyword_idf_3','keyword_pf_3','keyword_biword_3','pf_keyword_word_1','pf_keyword_tf*idf_1','pf_keyword_tf*idf*pf_1','pf_keyword_tf_1','pf_keyword_idf_1','pf_keyword_pf_1','pf_keyword_biword_1','pf_keyword_word_2','pf_keyword_tf*idf_2','pf_keyword_tf*idf*pf_2','pf_keyword_tf_2','pf_keyword_idf_2','pf_keyword_pf_2','pf_keyword_biword_2','pf_keyword_word_3','pf_keyword_tf*idf_3','pf_keyword_tf*idf*pf_3','pf_keyword_tf_3','pf_keyword_idf_3','pf_keyword_pf_3','pf_keyword_biword_3', 'break_words', 'comments']
   file_name = f"result-for-{forum_name}-{int(datetime.now().timestamp())}.csv"
   with open(file_name, 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
