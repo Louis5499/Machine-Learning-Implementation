@@ -186,19 +186,20 @@ def keywords_byID(ids):
     return data_list
 
 
-# TODO: Only anonymous, limit?
-def get_forum_posts(forum_name, post_num = 20, popular='false'):
+def get_forum_posts(forum_name, post_num = 20, popular='false', query=None):
 
   MAXIMUN_POSTS = 100
   roundIdx = 0
   last_post_id = None
   post_result_list = []
   tidied_post_id_arr = []
-  if popular == 'true':
+  if popular == 'true' or query is not None:
     print(f"Fetching all of the popular data")
     limits = min(MAXIMUN_POSTS, post_num)
-    # Dcard could only fetch 61 popular data, so in the response the amount of posts could be fewer than the the desired amount
-    url = dcard_api + 'forums/' + forum_name + f'/posts?limit={limits}&popular=true'
+    if query is not None:
+        sortType = 'create' if popular == 'false' else 'like'
+        url = dcard_api + f'search/posts?limit={post_num}&query={query}&field=topics&sort={sortType}'
+    else: url = dcard_api + 'forums/' + forum_name + f'/posts?limit={limits}&popular=true' # Dcard could only fetch 61 popular data, so in the response the amount of posts could be fewer than the the desired amount
     post_arr = url_to_json(url)
     if post_arr is None:
         return None
@@ -236,8 +237,9 @@ def get_forum_posts(forum_name, post_num = 20, popular='false'):
         item['popular'] = 'true'
 
 
+  query = '' if query is None else query
   get_all_col_nam = ['title','content','excerpt','anonymousSchool','anonymousDepartment','createdAt','commentCount','likeCount','tags','topics','withNickname','forumAlias','school','department','gender','reactions', 'popular', 'keyword_word_1','keyword_tf*idf_1','keyword_tf*idf*pf_1','keyword_tf_1','keyword_idf_1','keyword_pf_1','keyword_biword_1','keyword_word_2','keyword_tf*idf_2','keyword_tf*idf*pf_2','keyword_tf_2','keyword_idf_2','keyword_pf_2','keyword_biword_2','keyword_word_3','keyword_tf*idf_3','keyword_tf*idf*pf_3','keyword_tf_3','keyword_idf_3','keyword_pf_3','keyword_biword_3','pf_keyword_word_1','pf_keyword_tf*idf_1','pf_keyword_tf*idf*pf_1','pf_keyword_tf_1','pf_keyword_idf_1','pf_keyword_pf_1','pf_keyword_biword_1','pf_keyword_word_2','pf_keyword_tf*idf_2','pf_keyword_tf*idf*pf_2','pf_keyword_tf_2','pf_keyword_idf_2','pf_keyword_pf_2','pf_keyword_biword_2','pf_keyword_word_3','pf_keyword_tf*idf_3','pf_keyword_tf*idf*pf_3','pf_keyword_tf_3','pf_keyword_idf_3','pf_keyword_pf_3','pf_keyword_biword_3', 'break_words', 'comments']
-  file_name = f"result-for-{forum_name}-{int(datetime.now().timestamp())}.csv"
+  file_name = f"result-for-{forum_name}-{query}-{int(datetime.now().timestamp())}.csv"
   with open(file_name, 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(get_all_col_nam)
@@ -256,32 +258,67 @@ print("Please follow the instruction to enter your command")
 print("(If you just type the wrong command and want to skip, please enter 'skip')")
 print("(If you want to shut down the program, please enter 'exit')")
 command = ""
+state_correct = False
+tag_correct = False
 forum_correct = False
 popular_correct = False
 limits_correct = False
 shouldShutDown = False
 shouldSkip = False
 while(shouldShutDown == False):
+    state_name = ""
     forum_name = ""
+    tag_name = None
     is_popular = ""
     limit_num = ""
 
+    state_correct = False
+    tag_correct = False
     forum_correct = False
     popular_correct = False
     limits_correct = False
 
-    # Choose forum name
-    while(forum_correct == False):
-        print("please give a forum name you want to search: ")
-        search_forum = input(">> ")
-        if (search_forum == 'exit'):
+    while(state_correct == False):
+        print("please indicate you want to search 1) forum or 2) tags (Enter '1' or '2'): ")
+        search_state = input(">> ")
+        if (search_state == 'exit'):
             shouldShutDown = True
             break
-        if (search_forum == 'skip'):
+        if (search_state == 'skip'):
             shouldSkip = True
             break
-        forum_name = search_forum
-        forum_correct = True
+        if (search_state != '1' and search_state != '2'):
+            print("Plase only input '1' & '2' without quotation mark.")
+            continue
+        state_name = search_state  
+        state_correct = True   
+
+    if (search_state == '1'):
+        # Choose forum name
+        while(forum_correct == False):
+            print("please give a forum name you want to search: ")
+            search_forum = input(">> ")
+            if (search_forum == 'exit'):
+                shouldShutDown = True
+                break
+            if (search_forum == 'skip'):
+                shouldSkip = True
+                break
+            forum_name = search_forum
+            forum_correct = True
+    else:
+        # Choose tags name
+        while(tag_correct == False):
+            print("please give a tag name you want to search: ")
+            search_tag = input(">> ")
+            if (search_tag == 'exit'):
+                shouldShutDown = True
+                break
+            if (search_tag == 'skip'):
+                shouldSkip = True
+                break
+            tag_name = search_tag
+            tag_correct = True
     
     # Choose popular(熱門) or not
     while(shouldShutDown == False and shouldSkip == False and popular_correct == False):
@@ -321,4 +358,4 @@ while(shouldShutDown == False):
         continue
     else:
         if (limit_num > 61 and is_popular == 'true'): print(f"[Warning!!!!] Dcard will only respond 61 popular posts, so you will not receive {limit_num} posts.")
-        get_forum_posts(forum_name, limit_num, is_popular)
+        get_forum_posts(forum_name, limit_num, is_popular, tag_name)
